@@ -1,8 +1,9 @@
 package cloudwatch
 
 import (
-	"log"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func batch(logs <-chan Log, capacity Capacity) <-chan []Log {
