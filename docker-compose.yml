@@ -1,0 +1,15 @@
+source:
+  image: debian:jessie
+  command: bin/bash -c "while true; do echo 'Log'; sleep 1; done"
+
+worker:
+  build: demo
+  command: cloudwatch://
+  environment:
+    AWS_REGION: us-west-2
+    AWS_LOG_GROUP: logspout-cloudwatch
+    AWS_LOG_STREAM: demo
+    AWS_ACCESS_KEY_ID:
+    AWS_SECRET_ACCESS_KEY:
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
