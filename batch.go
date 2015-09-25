@@ -51,7 +51,7 @@ loop:
 			}
 
 			if b.willOverflow(l) {
-				log.Printf("Batch flushed to prevent size overflow - size: %d, capacity: %v", b.size, b.capacity)
+				log.Debugf("Batch flushed to prevent size overflow - size: %d, capacity: %v", b.size, b.capacity)
 				b.flush()
 			}
 
@@ -59,16 +59,16 @@ loop:
 			b.size += l.Size()
 
 			if b.isFullSize() {
-				log.Printf("Batch flushed due to batch size - size: %d, capacity: %v", b.size, b.capacity)
+				log.Debugf("Batch flushed due to batch size - size: %d, capacity: %v", b.size, b.capacity)
 				b.flush()
 			} else if b.isFullLength() {
-				log.Printf("Batch flushed due to batch length - length: %d, capacity: %v", len(b.messages), b.capacity)
+				log.Debugf("Batch flushed due to batch length - length: %d, capacity: %v", len(b.messages), b.capacity)
 				b.flush()
 			} else {
 				b.startFlushTimer()
 			}
 		case <-b.timer:
-			log.Printf("Batch flushed due to timer - capacity: %v", b.capacity)
+			log.Debugf("Batch flushed due to timer - capacity: %v", b.capacity)
 			b.flush()
 		}
 	}

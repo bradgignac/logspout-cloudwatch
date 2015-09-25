@@ -44,14 +44,14 @@ func NewAdapter(route *router.Route) (router.LogAdapter, error) {
 		Duration: batchDuration,
 	}
 
-	log.Printf("Created CloudWatch adapter - group: %s, stream: %s", group, stream)
+	log.Infof("Created CloudWatch adapter - group: %s, stream: %s", group, stream)
 
 	return &Adapter{route: route, logstream: logstream, capacity: capacity}, nil
 }
 
 // Stream passes messages from a logspout message channel to AWS CloudWatch.
 func (a *Adapter) Stream(logstream chan *router.Message) {
-	log.Printf("CloudWatch adapter is streaming Docker logs")
+	log.Infof("CloudWatch adapter is streaming Docker logs")
 
 	logs := transform(logstream)
 	batches := batch(logs, a.capacity)

@@ -88,14 +88,14 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 
 	resp, err := s.service.PutLogEvents(params)
 	if err != nil {
-		log.Printf("Log upload failed - length: %d, error: %v", len(logs), err)
+		log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
 		return
 	}
 
 	if resp.RejectedLogEventsInfo != nil {
-		log.Printf("Log upload succeeded with rejected events - length: %d", len(logs))
+		log.Warnf("Log upload succeeded with rejected events - length: %d", len(logs))
 	} else {
-		log.Printf("Log upload succeeded - length: %d", len(logs))
+		log.Debugf("Log upload succeeded - length: %d", len(logs))
 	}
 
 	s.token = resp.NextSequenceToken
