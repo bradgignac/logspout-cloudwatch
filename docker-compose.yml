@@ -3,7 +3,7 @@ source:
   command: bin/bash -c "while true; do echo 'Log'; sleep 1; done"
 
 worker:
-  build: .
+  build: demo
   command: cloudwatch://logspout-cloudwatch
   hostname: demo
   environment:
