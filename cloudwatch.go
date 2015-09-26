@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -27,6 +28,16 @@ type Adapter struct {
 	route     *router.Route
 	logstream *LogStream
 	capacity  Capacity
+}
+
+func init() {
+	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		level = log.InfoLevel
+	}
+
+	fmt.Println(level)
+	log.SetLevel(level)
 }
 
 // NewAdapter instances a new AWS CloudWatch adapter.
