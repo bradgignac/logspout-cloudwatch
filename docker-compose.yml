@@ -6,6 +6,7 @@ worker:
   build: demo
   command: cloudwatch://
   environment:
+    LOG_LEVEL: DEBUG
     AWS_REGION: us-west-2
     AWS_LOG_GROUP: logspout-cloudwatch
     AWS_LOG_STREAM: demo

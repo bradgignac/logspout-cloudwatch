@@ -1,9 +1,11 @@
 package cloudwatch
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -28,6 +30,16 @@ type Adapter struct {
 	capacity  Capacity
 }
 
+func init() {
+	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		level = log.InfoLevel
+	}
+
+	fmt.Println(level)
+	log.SetLevel(level)
+}
+
 // NewAdapter instances a new AWS CloudWatch adapter.
 func NewAdapter(route *router.Route) (router.LogAdapter, error) {
 	group := os.Getenv("AWS_LOG_GROUP")
@@ -43,14 +55,14 @@ func NewAdapter(route *router.Route) (router.LogAdapter, error) {
 		Duration: batchDuration,
 	}
 
-	log.Printf("Created CloudWatch adapter - group: %s, stream: %s", group, stream)
+	log.Infof("Created CloudWatch adapter - group: %s, stream: %s", group, stream)
 
 	return &Adapter{route: route, logstream: logstream, capacity: capacity}, nil
 }
 
 // Stream passes messages from a logspout message channel to AWS CloudWatch.
 func (a *Adapter) Stream(logstream chan *router.Message) {
-	log.Printf("CloudWatch adapter is streaming Docker logs")
+	log.Infof("CloudWatch adapter is streaming Docker logs")
 
 	logs := transform(logstream)
 	batches := batch(logs, a.capacity)
