@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -36,14 +35,17 @@ func init() {
 		level = log.InfoLevel
 	}
 
-	fmt.Println(level)
 	log.SetLevel(level)
 }
 
 // NewAdapter instances a new AWS CloudWatch adapter.
 func NewAdapter(route *router.Route) (router.LogAdapter, error) {
-	group := os.Getenv("AWS_LOG_GROUP")
-	stream := os.Getenv("AWS_LOG_STREAM")
+	group := route.Address
+	stream, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
 	logstream, err := NewLogStream(group, stream)
 	if err != nil {
 		return nil, err
