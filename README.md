@@ -1,5 +1,7 @@
 # logspout-cloudwatch
 
+[![Build Status](https://travis-ci.org/bradgignac/logspout-cloudwatch.svg)](https://travis-ci.org/bradgignac/logspout-cloudwatch)
+
 A [Logspout](https://github.com/gliderlabs/logspout) adapter for writing Docker container logs to AWS CloudWatch.
 
 ## Usage
