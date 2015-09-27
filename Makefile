@@ -1,4 +1,7 @@
-default: test
+default: deps test
+
+deps:
+	go get -t .
 
 test:
 	go test . -short
