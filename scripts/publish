@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+log () {
+  echo -e "\e[1m==> $@\e[0m"
+}
+
+error () {
+  echo -e "\e[31;1m$@\e[0m"
+}
+
+log "Building Docker container..."
+docker build -t bradgignac/logspout-cloudwatch docker
+
+log "Publishing container to bradgignac/logspout-cloudwatch:latest..."
+docker push bradgignac/logspout-cloudwatch
+
+for TAG in $@; do
+  log "Publishing container to bradgignac/logspout-cloudwatch:$TAG..."
+  docker tag bradgignac/logspout-cloudwatch bradgignac/logspout-cloudwatch:$TAG
+  docker push bradgignac/logspout-cloudwatch:$TAG
+done
