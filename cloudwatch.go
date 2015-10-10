@@ -66,7 +66,7 @@ func NewAdapter(route *router.Route) (router.LogAdapter, error) {
 func (a *Adapter) Stream(logstream chan *router.Message) {
 	log.Infof("CloudWatch adapter is streaming Docker logs")
 
-	logs := transform(logstream)
+	logs := filter(transform(logstream))
 	batches := batch(logs, a.capacity)
 
 	for batch := range batches {
