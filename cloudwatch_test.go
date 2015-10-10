@@ -1,35 +1,15 @@
 package cloudwatch
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/gliderlabs/logspout/router"
 )
 
 const NumMessages = 2000000
-
-func generateBatch(size int) []*cloudwatchlogs.InputLogEvent {
-	batch := make([]*cloudwatchlogs.InputLogEvent, size)
-
-	for i := 0; i < size; i++ {
-		msg := randomdata.Paragraph()
-		json := fmt.Sprintf("{ \"message\": \"%s\", \"category\": \"logspout\" }", msg)
-		now := time.Now().Unix() * 1000
-
-		batch[i] = &cloudwatchlogs.InputLogEvent{
-			Message:   aws.String(json),
-			Timestamp: aws.Int64(now),
-		}
-	}
-
-	return batch
-}
 
 func TestCloudWatchAdapter(t *testing.T) {
 	if testing.Short() {
