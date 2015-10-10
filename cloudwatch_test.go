@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -16,10 +15,7 @@ func TestCloudWatchAdapter(t *testing.T) {
 		t.Skip("Skipping integration test in short mode.")
 	}
 
-	os.Setenv("AWS_LOG_GROUP", "logspout-cloudwatch")
-	os.Setenv("AWS_LOG_STREAM", "integration")
-
-	route := &router.Route{}
+	route := &router.Route{Address: "logspout-cloudwatch"}
 	messages := make(chan *router.Message)
 
 	adapter, err := NewAdapter(route)
