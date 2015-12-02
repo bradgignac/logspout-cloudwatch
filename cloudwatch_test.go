@@ -1,6 +1,8 @@
 package cloudwatch
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -26,8 +28,20 @@ func TestCloudWatchAdapter(t *testing.T) {
 
 	go adapter.Stream(messages)
 	for i := 0; i < NumMessages; i++ {
-		messages <- &router.Message{Data: randomdata.Paragraph(), Time: time.Now()}
+		messages <- createMessage()
 	}
 
 	close(messages)
+}
+
+func createMessage() *router.Message {
+	data := ""
+	timestamp := time.Now()
+	random := rand.Intn(100)
+
+	if random == 0 {
+		data = randomdata.Paragraph()
+	}
+
+	return &router.Message{Data: data, Time: timestamp}
 }
