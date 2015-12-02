@@ -7,4 +7,4 @@ test:
 	go test . -short
 
 integration:
-	go test . -v -timeout 1h
+	go test . -v -timeout 2h
