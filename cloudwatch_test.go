@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/gliderlabs/logspout/router"
 )
 
-const NumMessages = 250000
+const NumMessages = 25000000
 
 func TestCloudWatchAdapter(t *testing.T) {
 	if testing.Short() {
@@ -26,8 +27,20 @@ func TestCloudWatchAdapter(t *testing.T) {
 
 	go adapter.Stream(messages)
 	for i := 0; i < NumMessages; i++ {
-		messages <- &router.Message{Data: randomdata.Paragraph(), Time: time.Now()}
+		messages <- createMessage()
 	}
 
 	close(messages)
+}
+
+func createMessage() *router.Message {
+	data := ""
+	timestamp := time.Now()
+	random := rand.Intn(100)
+
+	if random == 0 {
+		data = randomdata.Paragraph()
+	}
+
+	return &router.Message{Data: data, Time: timestamp}
 }
