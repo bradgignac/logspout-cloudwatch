@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
