@@ -9,7 +9,7 @@ import (
 	"github.com/gliderlabs/logspout/router"
 )
 
-const NumMessages = 250000
+const NumMessages = 1000000
 
 func TestCloudWatchAdapter(t *testing.T) {
 	if testing.Short() {
