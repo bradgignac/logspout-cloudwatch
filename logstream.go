@@ -4,32 +4,28 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
 
 // LogStream ships logs to AWS CloudWatch.
 type LogStream struct {
-	group   *string
-	stream  *string
-	token   *string
+	Group   *string
+	Stream  *string
+	Token   *string
 	service *cloudwatchlogs.CloudWatchLogs
 }
 
 // NewLogStream instantiates a Logger.
-func NewLogStream(group, stream string) (*LogStream, error) {
-	cloudwatch := cloudwatchlogs.New(nil)
+func NewLogStream(group, stream string, config client.ConfigProvider) *LogStream {
+	cloudwatch := cloudwatchlogs.New(config)
 	logstream := &LogStream{
-		group:   aws.String(group),
-		stream:  aws.String(stream),
+		Group:   aws.String(group),
+		Stream:  aws.String(stream),
 		service: cloudwatch,
 	}
 
-	err := logstream.Init()
-	if err != nil {
-		return nil, err
-	}
-
-	return logstream, nil
+	return logstream
 }
 
 // Init fetches the sequence token for a stream so logs can be streamed.
@@ -40,7 +36,7 @@ func (s *LogStream) Init() error {
 	}
 
 	if stream != nil {
-		s.token = stream.UploadSequenceToken
+		s.Token = stream.UploadSequenceToken
 		return nil
 	}
 
@@ -49,8 +45,8 @@ func (s *LogStream) Init() error {
 
 func (s *LogStream) createStream() error {
 	params := &cloudwatchlogs.CreateLogStreamInput{
-		LogGroupName:  s.group,
-		LogStreamName: s.stream,
+		LogGroupName:  s.Group,
+		LogStreamName: s.Stream,
 	}
 
 	_, err := s.service.CreateLogStream(params)
@@ -60,8 +56,8 @@ func (s *LogStream) createStream() error {
 
 func (s *LogStream) findStream() (*cloudwatchlogs.LogStream, error) {
 	params := &cloudwatchlogs.DescribeLogStreamsInput{
-		LogGroupName:        s.group,
-		LogStreamNamePrefix: s.stream,
+		LogGroupName:        s.Group,
+		LogStreamNamePrefix: s.Stream,
 		Limit:               aws.Int64(1),
 	}
 
@@ -81,9 +77,9 @@ func (s *LogStream) findStream() (*cloudwatchlogs.LogStream, error) {
 func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 	params := &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     logs,
-		LogGroupName:  s.group,
-		LogStreamName: s.stream,
-		SequenceToken: s.token,
+		LogGroupName:  s.Group,
+		LogStreamName: s.Stream,
+		SequenceToken: s.Token,
 	}
 
 	resp, err := s.service.PutLogEvents(params)
@@ -98,5 +94,5 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 		log.Debugf("Log upload succeeded - length: %d", len(logs))
 	}
 
-	s.token = resp.NextSequenceToken
+	s.Token = resp.NextSequenceToken
 }
