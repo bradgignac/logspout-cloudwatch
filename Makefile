@@ -8,3 +8,5 @@ test:
 
 integration:
 	go test . -v -timeout 2h
+
+.PHONY: test integration
