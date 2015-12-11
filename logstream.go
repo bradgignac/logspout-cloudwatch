@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
@@ -83,9 +84,17 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) error {
 	}
 
 	resp, err := s.service.PutLogEvents(params)
-	if err != nil {
-		log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
-		return err
+	awserr, _ := err.(awserr.Error)
+
+	if awserr != nil {
+		switch awserr.Code() {
+		case "InvalidSequenceTokenException":
+			s.Init()
+			return s.Log(logs)
+		default:
+			log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
+			return awserr
+		}
 	}
 
 	if resp.RejectedLogEventsInfo != nil {

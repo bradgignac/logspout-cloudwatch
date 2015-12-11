@@ -98,3 +98,24 @@ func (s *LogStreamSuite) TestPutLogsToExistingStream(c *C) {
 	c.Assert(token, Equals, "2")
 	c.Assert(stream.LogCount, Equals, 2)
 }
+
+func (s *LogStreamSuite) TestHandlesBadSequenceToken(c *C) {
+	s.mock.AddStream("group", "stream")
+	s.stream.Init()
+
+	stream := s.mock.GetStream("group", "stream")
+	stream.Token = 10
+
+	logs := []*cloudwatchlogs.InputLogEvent{
+		&cloudwatchlogs.InputLogEvent{
+			Message:   aws.String("body"),
+			Timestamp: aws.Int64(0),
+		},
+	}
+	err := s.stream.Log(logs)
+	token := aws.StringValue(s.stream.Token)
+
+	c.Assert(err, IsNil)
+	c.Assert(token, Equals, "11")
+	c.Assert(stream.LogCount, Equals, 1)
+}

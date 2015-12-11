@@ -113,7 +113,18 @@ func (m *CloudWatchLogsMock) putLogEvents(w http.ResponseWriter, r *http.Request
 
 	group := aws.StringValue(data.LogGroupName)
 	stream := aws.StringValue(data.LogStreamName)
+	token := aws.StringValue(data.SequenceToken)
+
 	s := m.GetStream(group, stream)
+	if strconv.Itoa(s.Token) != token && s.Token != 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		m.writeJSON(w, &map[string]interface{}{
+			"__type":  "InvalidSequenceTokenException",
+			"message": "The given sequenceToken is invalid.",
+		})
+		return
+	}
+
 	s.LogCount += len(data.LogEvents)
 	s.Token++
 
