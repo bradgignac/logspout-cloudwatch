@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/bradgignac/logspout-cloudwatch/test"
@@ -27,7 +28,9 @@ var _ = Suite(&LogStreamSuite{})
 func (s *LogStreamSuite) SetUpTest(c *C) {
 	s.mock = test.NewCloudWatchLogsMock()
 
+	creds := credentials.NewStaticCredentials("id", "secret", "token")
 	config := aws.NewConfig().
+		WithCredentials(creds).
 		WithEndpoint(s.mock.URL).
 		WithRegion(REGION).
 		WithDisableSSL(true)
