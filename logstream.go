@@ -89,8 +89,8 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) error {
 	if awserr != nil {
 		switch awserr.Code() {
 		case "InvalidSequenceTokenException":
-			s.Init()
-			return s.Log(logs)
+			log.Infof("Retrying log upload with new token - length %d, error, %v", len(logs), err)
+			return s.retryBatchWithNewToken(logs)
 		default:
 			log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
 			return awserr
@@ -106,4 +106,12 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) error {
 	s.Token = resp.NextSequenceToken
 
 	return nil
+}
+
+func (s *LogStream) retryBatchWithNewToken(logs []*cloudwatchlogs.InputLogEvent) error {
+	if err := s.Init(); err != nil {
+		return err
+	}
+
+	return s.Log(logs)
 }
