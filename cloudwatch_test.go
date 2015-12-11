@@ -9,7 +9,7 @@ import (
 	"github.com/gliderlabs/logspout/router"
 )
 
-const NumMessages = 25000000
+const NumMessages = 1000000
 
 func TestCloudWatchAdapter(t *testing.T) {
 	if testing.Short() {
@@ -38,7 +38,7 @@ func createMessage() *router.Message {
 	timestamp := time.Now()
 	random := rand.Intn(100)
 
-	if random == 0 {
+	if random != 0 {
 		data = randomdata.Paragraph()
 	}
 
