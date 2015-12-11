@@ -36,7 +36,11 @@ func (s *LogStreamSuite) SetUpTest(c *C) {
 		WithDisableSSL(true)
 	session := session.New(config)
 
-	s.stream = NewLogStream("group", "stream", session)
+	s.stream = &LogStream{
+		Group:   aws.String("group"),
+		Stream:  aws.String("stream"),
+		service: cloudwatchlogs.New(session),
+	}
 }
 
 func (s *LogStreamSuite) TearDownTest(c *C) {

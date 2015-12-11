@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
 
@@ -18,15 +18,17 @@ type LogStream struct {
 }
 
 // NewLogStream instantiates a Logger.
-func NewLogStream(group, stream string, config client.ConfigProvider) *LogStream {
-	cloudwatch := cloudwatchlogs.New(config)
+func NewLogStream(group, stream string) (*LogStream, error) {
+	session := session.New()
+	cloudwatch := cloudwatchlogs.New(session)
 	logstream := &LogStream{
 		Group:   aws.String(group),
 		Stream:  aws.String(stream),
 		service: cloudwatch,
 	}
+	err := logstream.Init()
 
-	return logstream
+	return logstream, err
 }
 
 // Init fetches the sequence token for a stream so logs can be streamed.
