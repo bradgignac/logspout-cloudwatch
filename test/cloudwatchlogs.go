@@ -2,19 +2,26 @@ package test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
 
+// MockStream stores the state of a fake stream.
+type MockStream struct {
+	LogCount int
+	Token    int
+}
+
 // CloudWatchLogsMock mocks the CloudFront Logs API.
 type CloudWatchLogsMock struct {
 	*httptest.Server
 
+	Groups  map[string]map[string]*MockStream
 	Streams []*cloudwatchlogs.LogStream
 }
 
@@ -23,13 +30,38 @@ func NewCloudWatchLogsMock() *CloudWatchLogsMock {
 	mock := &CloudWatchLogsMock{}
 	mock.Server = httptest.NewServer(mock)
 	mock.Streams = []*cloudwatchlogs.LogStream{}
+	mock.Groups = map[string]map[string]*MockStream{}
 
 	return mock
 }
 
 // AddStream registers a new stream.
 func (m *CloudWatchLogsMock) AddStream(group, stream string) {
-	fmt.Println("Adding stream...")
+	g, ok := m.Groups[group]
+	if !ok {
+		g = map[string]*MockStream{}
+		m.Groups[group] = g
+	}
+
+	s, ok := g[stream]
+	if !ok {
+		s = &MockStream{}
+		g[stream] = s
+	}
+}
+
+// GetStreams returns a list of streams in a group.
+func (m *CloudWatchLogsMock) GetStreams(group string) map[string]*MockStream {
+	return m.Groups[group]
+}
+
+// GetStream returns a stream in a group.
+func (m *CloudWatchLogsMock) GetStream(group, stream string) *MockStream {
+	if group, ok := m.Groups[group]; ok {
+		return group[stream]
+	}
+
+	return nil
 }
 
 func (m *CloudWatchLogsMock) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,16 +72,22 @@ func (m *CloudWatchLogsMock) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.describeLogStreams(w, r)
 	case "Logs_20140328.CreateLogStream":
 		m.createLogStream(w, r)
+	case "Logs_20140328.PutLogEvents":
+		m.putLogEvents(w, r)
 	}
 }
 
 func (m *CloudWatchLogsMock) describeLogStreams(w http.ResponseWriter, r *http.Request) {
-	var streams []interface{}
+	data := &cloudwatchlogs.DescribeLogStreamsInput{}
+	m.readJSON(r.Body, data)
 
-	for _, s := range m.Streams {
+	group := aws.StringValue(data.LogGroupName)
+	streams := []interface{}{}
+
+	for n, s := range m.Groups[group] {
 		streams = append(streams, map[string]string{
-			"logStreamName":       *s.LogStreamName,
-			"uploadSequenceToken": *s.UploadSequenceToken,
+			"logStreamName":       n,
+			"uploadSequenceToken": strconv.Itoa(s.Token),
 		})
 	}
 
@@ -60,14 +98,28 @@ func (m *CloudWatchLogsMock) describeLogStreams(w http.ResponseWriter, r *http.R
 
 func (m *CloudWatchLogsMock) createLogStream(w http.ResponseWriter, r *http.Request) {
 	data := &cloudwatchlogs.CreateLogStreamInput{}
-
 	m.readJSON(r.Body, data)
-	m.Streams = append(m.Streams, &cloudwatchlogs.LogStream{
-		LogStreamName:       data.LogStreamName,
-		UploadSequenceToken: aws.String("new stream"),
-	})
 
+	group := aws.StringValue(data.LogGroupName)
+	stream := aws.StringValue(data.LogStreamName)
+
+	m.AddStream(group, stream)
 	m.writeJSON(w, &map[string]interface{}{})
+}
+
+func (m *CloudWatchLogsMock) putLogEvents(w http.ResponseWriter, r *http.Request) {
+	data := &cloudwatchlogs.PutLogEventsInput{}
+	m.readJSON(r.Body, data)
+
+	group := aws.StringValue(data.LogGroupName)
+	stream := aws.StringValue(data.LogStreamName)
+	s := m.GetStream(group, stream)
+	s.LogCount += len(data.LogEvents)
+	s.Token++
+
+	m.writeJSON(w, &map[string]interface{}{
+		"nextSequenceToken": strconv.Itoa(s.Token),
+	})
 }
 
 func (m *CloudWatchLogsMock) readJSON(body io.ReadCloser, data interface{}) error {

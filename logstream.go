@@ -74,7 +74,7 @@ func (s *LogStream) findStream() (*cloudwatchlogs.LogStream, error) {
 }
 
 // Log submits a batch of logs to the LogStream.
-func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
+func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) error {
 	params := &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     logs,
 		LogGroupName:  s.Group,
@@ -85,7 +85,7 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 	resp, err := s.service.PutLogEvents(params)
 	if err != nil {
 		log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
-		return
+		return err
 	}
 
 	if resp.RejectedLogEventsInfo != nil {
@@ -95,4 +95,6 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 	}
 
 	s.Token = resp.NextSequenceToken
+
+	return nil
 }
