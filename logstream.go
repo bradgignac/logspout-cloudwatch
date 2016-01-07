@@ -4,7 +4,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 )
 
@@ -17,15 +18,17 @@ type LogStream struct {
 }
 
 // NewLogStream instantiates a Logger.
-func NewLogStream(group, stream string, config client.ConfigProvider) *LogStream {
-	cloudwatch := cloudwatchlogs.New(config)
+func NewLogStream(group, stream string) (*LogStream, error) {
+	session := session.New()
+	cloudwatch := cloudwatchlogs.New(session)
 	logstream := &LogStream{
 		Group:   aws.String(group),
 		Stream:  aws.String(stream),
 		service: cloudwatch,
 	}
+	err := logstream.Init()
 
-	return logstream
+	return logstream, err
 }
 
 // Init fetches the sequence token for a stream so logs can be streamed.
@@ -74,7 +77,7 @@ func (s *LogStream) findStream() (*cloudwatchlogs.LogStream, error) {
 }
 
 // Log submits a batch of logs to the LogStream.
-func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
+func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) error {
 	params := &cloudwatchlogs.PutLogEventsInput{
 		LogEvents:     logs,
 		LogGroupName:  s.Group,
@@ -83,9 +86,17 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 	}
 
 	resp, err := s.service.PutLogEvents(params)
-	if err != nil {
-		log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
-		return
+	awserr, _ := err.(awserr.Error)
+
+	if awserr != nil {
+		switch awserr.Code() {
+		case "InvalidSequenceTokenException":
+			log.Infof("Retrying log upload with new token - length %d, error, %v", len(logs), err)
+			return s.retryBatchWithNewToken(logs)
+		default:
+			log.Errorf("Log upload failed - length: %d, error: %v", len(logs), err)
+			return awserr
+		}
 	}
 
 	if resp.RejectedLogEventsInfo != nil {
@@ -95,4 +106,14 @@ func (s *LogStream) Log(logs []*cloudwatchlogs.InputLogEvent) {
 	}
 
 	s.Token = resp.NextSequenceToken
+
+	return nil
+}
+
+func (s *LogStream) retryBatchWithNewToken(logs []*cloudwatchlogs.InputLogEvent) error {
+	if err := s.Init(); err != nil {
+		return err
+	}
+
+	return s.Log(logs)
 }

@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/gliderlabs/logspout/router"
 )
@@ -46,10 +45,8 @@ func NewAdapter(route *router.Route) (router.LogAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	session := session.New()
-	logstream := NewLogStream(group, stream, session)
-	err = logstream.Init()
+
+	logstream, err := NewLogStream(group, stream)
 	if err != nil {
 		return nil, err
 	}
