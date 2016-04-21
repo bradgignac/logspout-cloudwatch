@@ -17,6 +17,15 @@ type LogStream struct {
 	service *cloudwatchlogs.CloudWatchLogs
 }
 
+func filterStreams(vs []*cloudwatchlogs.LogStream, f func(*cloudwatchlogs.LogStream) bool) []*cloudwatchlogs.LogStream {
+    vsf := make([]*cloudwatchlogs.LogStream, 0)
+    for _, v := range vs {
+        if f(v) {
+            vsf = append(vsf, v)
+        }
+    }
+    return vsf
+}
 // NewLogStream instantiates a Logger.
 func NewLogStream(group, stream string) (*LogStream, error) {
 	session := session.New()
@@ -69,11 +78,15 @@ func (s *LogStream) findStream() (*cloudwatchlogs.LogStream, error) {
 		return nil, err
 	}
 
-	if len(resp.LogStreams) == 0 {
+	streams := filterStreams(resp.LogStreams, func(st *cloudwatchlogs.LogStream) bool {
+		return *st.LogStreamName == *s.Stream
+	})
+
+	if len(streams) == 0 {
 		return nil, nil
 	}
 
-	return resp.LogStreams[0], nil
+	return streams[0], nil
 }
 
 // Log submits a batch of logs to the LogStream.

@@ -56,6 +56,16 @@ func (s *LogStreamSuite) TestNewStream(c *C) {
 	c.Assert(streams, HasLen, 1)
 }
 
+func (s *LogStreamSuite) TestNewStreamSubset(c *C) {
+	s.mock.AddStream("group", "stream1")
+
+	err := s.stream.Init()
+
+	c.Assert(err, IsNil)
+	c.Assert(s.stream.Token, IsNil)
+
+}
+
 func (s *LogStreamSuite) TestExistingStream(c *C) {
 	s.mock.AddStream("group", "stream")
 
@@ -65,6 +75,17 @@ func (s *LogStreamSuite) TestExistingStream(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(s.stream.Token, NotNil)
 	c.Assert(streams, HasLen, 1)
+}
+
+func (s *LogStreamSuite) TestMultipleStreams(c *C) {
+	s.mock.AddStream("group", "stream1")
+	s.mock.AddStream("group", "stream")
+	err := s.stream.Init()
+	streams := s.mock.GetStreams("group")
+
+	c.Assert(err, IsNil)
+	c.Assert(s.stream.Token, NotNil)
+	c.Assert(streams, HasLen, 2)
 }
 
 func (s *LogStreamSuite) TestPutLogsToNewStream(c *C) {
