@@ -1,7 +1,7 @@
 package cloudwatch
 
 import (
-	log "github.com/sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -18,14 +18,15 @@ type LogStream struct {
 }
 
 func filterStreams(vs []*cloudwatchlogs.LogStream, f func(*cloudwatchlogs.LogStream) bool) []*cloudwatchlogs.LogStream {
-    vsf := make([]*cloudwatchlogs.LogStream, 0)
-    for _, v := range vs {
-        if f(v) {
-            vsf = append(vsf, v)
-        }
-    }
-    return vsf
+	vsf := make([]*cloudwatchlogs.LogStream, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
 }
+
 // NewLogStream instantiates a Logger.
 func NewLogStream(group, stream string) (*LogStream, error) {
 	session := session.New()

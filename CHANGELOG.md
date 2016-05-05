@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.1.3 (May 5, 2016)
+
+- Accurately detect when a host's logstream already exists.
+
 ## v0.1.2 (March 9, 2016)
 
 - Introduce integration tests for verifying a release.
